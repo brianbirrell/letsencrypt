@@ -1,0 +1,59 @@
+#!/bin/bash
+#================================================================
+# Let's Encrypt key setup script for Courier on Ubuntu/Debian
+# @author Brian Birrell<b.birrell@gmail.com>
+# Usage: ./letsencrypt-courier.sh [base-domain-name]
+# More info: 
+#================================================================
+domain=$1
+le_path='/opt/letsencrypt'
+le_conf='/etc/letsencrypt'
+courier_conf='/etc/courier'
+
+if [ -z "$domain" ] ; then
+        echo "[ERROR] you must provide the domain name for the certificate renewal."
+        exit 1;
+fi
+
+key_file="$le_conf/live/$domain/privkey.pem"
+
+if [ ! -f $cert_file ]; then
+	echo "[ERROR] private key file not found for $domain."
+	exit 1;
+fi
+
+cert_file="$le_conf/live/$domain/fullchain.pem"
+
+if [ ! -f $cert_file ]; then
+	echo "[ERROR] certificate file not found for $domain."
+	exit 1;
+fi
+
+echo "Creating imapd.pem for $domain..."
+imap_pem="$courier_conf/imapd.pem"
+cat $key_file $cert_file > $imap_pem
+if [ ! -f $imap_pem ]; then
+	echo "[ERROR] $imap_pem not found for $domain."
+	exit 1;
+else
+	chmod 600 $imap_pem
+
+	echo "Reloading courier-imap-ssl..."
+	service courier-imap-ssl force-reload
+fi
+
+echo "Creating pop3d.pem for $domain..."
+pop3d_pem="$courier_conf/pop3d.pem"
+cat $key_file $cert_file > $pop3d_pem
+if [ ! -f $pop3d_pem ]; then
+	echo "[ERROR] $pop3d_pem not found for $domain."
+	exit 1;
+else
+	chmod 600 $pop3d_pem
+
+	echo "Reloading courier-pop-ssl..."
+	service courier-pop-ssl force-reload
+fi
+
+echo "Courier setup finished for $domain"
+exit 0;
