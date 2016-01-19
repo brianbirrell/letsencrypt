@@ -54,8 +54,14 @@ else
 	echo "The certificate for $domain is about to expire soon. Starting renewal request..."
 	domain_list=$( get_domain_list $domain )
 	"$le_path"/letsencrypt-auto certonly --apache --renew-by-default --domains "${domain_list}"
+	
 	echo "Restarting Apache..."
 	service apache2 reload
+
+	echo "Restarting Courier..."
+	service courier-imap-ssl force-reload
+	service courier-pop-ssl force-reload
+
 	echo "Renewal process finished for domain $domain"
 	exit 0;
 fi
