@@ -13,7 +13,7 @@ exp_limit=30;
 get_domain_list(){
         certdomain=$1
         config_file="$le_conf/renewal/$certdomain.conf"
-        
+
 	if [ ! -f $config_file ] ; then
                 echo "[ERROR] The config file for the certificate $certdomain was not found."
                 exit 1;
@@ -54,9 +54,12 @@ else
 	echo "The certificate for $domain is about to expire soon. Starting renewal request..."
 	domain_list=$( get_domain_list $domain )
 	"$le_path"/letsencrypt-auto certonly --apache --renew-by-default --domains "${domain_list}"
-	
+
 	echo "Restarting Apache..."
 	service apache2 reload
+
+	echo "Restarting Postfix..."
+	service postfix reload
 
 	echo "Restarting Courier..."
 	service courier-imap-ssl force-reload
